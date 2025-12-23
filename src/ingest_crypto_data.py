@@ -1,7 +1,19 @@
 import requests
 import pandas as pd
 from datetime import datetime
-import time
+from sqlalchemy import create_engine
+import os
+
+def get_db_connection():
+    """Create database connection"""
+    db_host = os.getenv('DB_HOST', 'localhost')
+    db_port = os.getenv('DB_PORT', '5432')
+    db_name = os.getenv('DB_NAME', 'crypto_db')
+    db_user = os.getenv('DB_USER', 'crypto_user')
+    db_password = os.getenv('DB_PASSWORD', 'crypto_pass')
+    
+    connection_string = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+    return create_engine(connection_string)
 
 def fetch_crypto_data():
     """Fetch cryptocurrency data from CoinGecko API"""
@@ -20,7 +32,6 @@ def fetch_crypto_data():
         response.raise_for_status()
         data = response.json()
         
-        # Extract relevant fields
         processed_data = []
         for coin in data:
             processed_data.append({
@@ -41,6 +52,11 @@ def fetch_crypto_data():
         filename = f"data/crypto_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         df.to_csv(filename, index=False)
         print(f"Data saved to {filename}")
+        
+        # Save to PostgreSQL
+        engine = get_db_connection()
+        df.to_sql('crypto_prices', engine, if_exists='append', index=False)
+        print(f"Data inserted into database: {len(df)} records")
         
         return df
         
