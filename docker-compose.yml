@@ -33,6 +33,23 @@ services:
     networks:
       - crypto_network
 
+  query:
+    build: .
+    container_name: crypto_query
+    depends_on:
+      - postgres
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: crypto_db
+      DB_USER: crypto_user
+      DB_PASSWORD: crypto_pass
+    volumes:
+      - ./src:/app/src
+    command: python src/query_database.py
+    networks:
+      - crypto_network
+
 volumes:
   postgres_data:
 
